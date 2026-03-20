@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 #Open to save just the headers
 ukdata = open('ukb45089_filtered1.csv', 'rt')
@@ -7,14 +8,17 @@ line = ukdata.readline()
 line = line.rstrip()
 headers = line.split(',')
 ukdata.close()
+
 #cases = 41202-*, 41204-*, 40006-*, 20001-*
 #Save the names of all the indices where the column headers that have the indicated values occur
 case1_inds = []
 for i, curr in enumerate (headers):
     if ("41202" in curr) or ("41204" in curr) or ("40006" in curr):
         case1_inds.append(i)
+        
 #Make a new df that only has these columns
 case1df = pd.read_csv('ukb45089_filtered1.csv', usecols=case1_inds, low_memory=False)
+
 #C18, C19, C20
 #Search for rows that have the CRC values in them, these will be cases
 case1_samples = set()
@@ -30,10 +34,11 @@ control1_inds = []
 for i, curr in enumerate (headers):
     if ("41202" in curr) or ("41204" in curr):
         control1_inds.append(i)
+        
 #Make a new df that only contains the columns indicated
 control1df = pd.read_csv('ukb45089_filtered1.csv', usecols=control1_inds, low_memory=False)
 
-#Find columns that don't contain a C or D
+#Find columns that don't contain a C or D (C = 'cancer' and D = 'carcinoma')
 control1_samples = set()
 #shouldn't contain C or D
 for row in control1df.itertuples():
@@ -74,17 +79,20 @@ controls_comb_list = sorted(controls_comb)
 
 #Export cases and controls as a txt file
 firstcol = pd.read_csv('ukb45089_filtered1.csv', usecols=[0])
+
 outputfile = open("cases.txt", "wt")
 for i in case1_samples_list:
     caseid= int(firstcol.iloc[i,0])
     print(caseid, file= outputfile)
 outputfile.close()
+
 outputfile = open("controls.txt", "wt")
 for i in controls_comb_list:
     caseid= int(firstcol.iloc[i,0])
     print(caseid, file= outputfile)
 outputfile.close()
 
+###############################################
 #Plot the histogram
 #Find only the columns that have the age
 age_inds = []
@@ -97,11 +105,11 @@ for i, curr in enumerate (headers):
 agedf = pd.read_csv('ukb45089_filtered1.csv', usecols= age_inds )
 case_agedf = agedf.iloc[case1_samples_list]        
 case_agearray = np.array(case_agedf)
+
 #Calculate the ages
 case_adj_agearray= np.array(2024 - case_agearray)
 case_adj_agelist = list(case_adj_agearray.flatten())
 
-import matplotlib.pyplot as plt
 #Plot the distribution
 plt.hist(case_adj_agelist, color='skyblue', edgecolor='black')
 plt.xlabel('Age (Years)')
@@ -115,6 +123,7 @@ control_agearray = np.array(control_agedf)
 control_adj_agearray = np.array(2024 - control_agearray)
 control_adj_agelist = list(control_adj_agearray.flatten())
 
+#Plot the controls
 plt.hist(control_adj_agelist, color='skyblue', edgecolor='black')
 plt.xlabel('Age (Years)')
 plt.ylabel('Frequency')
@@ -155,6 +164,7 @@ for i in control_age_fil_list:
     print(controlid, file = outputfile1)
 outputfile1.close()
 
+#####################################################
 #See what races the cases are.
 #Find the columns that contain the race information
 race_inds = []
@@ -182,7 +192,7 @@ for i in range(len(case_races)):
 case_races_keys = list(case_races_dict.keys())
 case_races_vals = list(case_races_dict.values())
 
-#Might show races by what they are by using a table if I need the actual races displayed on the histogram
+#Plot them
 plt.bar(case_races_keys,case_races_vals)
 plt.xticks(rotation=90)
 plt.xlabel('Ethnicity')
@@ -190,7 +200,7 @@ plt.ylabel('Frequency')
 plt.title('Ethnicity Distribution of Cases from UK BioBank Data')   
 plt.show()
 
-#Do the same thing for controls just to see
+#Repeat for controls
 control_racedf = racedf.iloc[control_age_fil_list]        
 control_racearray = np.array(control_racedf.iloc[:,0])
 control_races = []
