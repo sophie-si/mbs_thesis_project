@@ -4,6 +4,14 @@ Created on Mon Sep  9 12:08:07 2024
 
 @author: sophi
 """
+import random
+import os
+
+#Create directory where you want to make the outputs
+folder_name = 'Case_and_Control_Groups'
+os.mkdir(folder_name)
+
+#Read input files (cases and controls)
 casesin = open("cases.txt", "rt")
 caseslist = []
 for curr in casesin:
@@ -18,20 +26,25 @@ for curr in controlsin:
     controlslist.append(line)
 controlsin.close()
 
-import random
+#Shuffle controls
+#Set num_groups to the number of groups you want to make
+num_groups = 10
 rand_ctrl_list = controlslist.copy()
 random.shuffle(rand_ctrl_list)
-print(len(rand_ctrl_list)/10)
+print(len(rand_ctrl_list)/num_groups)
 
+#Create function to assign groups to the shuffled controls
 def assign_groups (rand_list, start_ind, end_ind, grouplist):
     for k in range(start_ind, end_ind):
         grouplist.append(rand_list[k])
-    return grouplist
-group1list = []
-assign_groups(rand_ctrl_list, 0, 14050, group1list)      
+    return grouplist     
 
-def write_groups (filename, cases_list, controls_list):        
-    cases_controls_out = open(filename, "wt")
+#Create function to write outputs
+#These include cases and controls where a case is 2 and a control is 1
+def write_groups (out_folder, filename, cases_list, controls_list):  
+    #Create file path to output
+    full_path = os.path.join(out_folder, filename)      
+    cases_controls_out = open(full_path, "wt")
     for i in range(len(caseslist)):
         print(cases_list[i], cases_list[i], 2, file =cases_controls_out,
               sep = "\t")
@@ -39,52 +52,15 @@ def write_groups (filename, cases_list, controls_list):
         print(controls_list[i], controls_list[i], 1, 
               file = cases_controls_out, sep = "\t")
     cases_controls_out.close()
-write_groups ("cases_ctrls_group1.txt", caseslist, group1list)
 
-group2list = []
-assign_groups(rand_ctrl_list, 14050, 14050*2, group2list)
-write_groups("cases_ctrls_group2.txt", caseslist, group2list)
-
-group3list = []
-assign_groups(rand_ctrl_list, 14050*2, 14050*3, group3list)
-write_groups("cases_ctrls_group3.txt", caseslist, group3list)
-
-group4list = []
-assign_groups(rand_ctrl_list, 14050*3, 14050*4, group4list)
-write_groups("cases_ctrls_group4.txt", caseslist, group4list)
-
-group5list=[]
-assign_groups(rand_ctrl_list, 14050*4, 14050*5, group5list)
-write_groups("cases_ctrls_group5.txt", caseslist, group5list)
-
-group6list=[]
-assign_groups(rand_ctrl_list, 14050*5, 14050*6, group6list)
-write_groups("cases_ctrls_group6.txt", caseslist, group6list)
-
-group7list=[]
-assign_groups(rand_ctrl_list, 14050*6, 14050*7, group7list)
-write_groups("cases_ctrls_group7.txt", caseslist, group7list)
-
-group8list=[]
-assign_groups(rand_ctrl_list, 14050*7, 14050*8, group8list)
-write_groups("cases_ctrls_group8.txt", caseslist, group8list)
-
-group9list=[]
-assign_groups(rand_ctrl_list, 14050*8, 14050*9, group9list)
-write_groups("cases_ctrls_group9.txt", caseslist, group9list)
-
-group10list=[]
-assign_groups(rand_ctrl_list, 14050*9, len(rand_ctrl_list), group10list)
-write_groups("cases_ctrls_group10.txt", caseslist, group10list)
-   
-# =============================================================================
-# cases_controls_out = open("casescontrols.txt", "wt")
-# for i in range(len(caseslist)):
-#     print(caseslist[i], caseslist[i], 2, file =cases_controls_out,
-#              sep = "\t")
-# for i in range(len(controlslist)):
-#     print(controlslist[i], controlslist[i], 1, 
-#              file = cases_controls_out, sep = "\t")
-# cases_controls_out.close()
-# =============================================================================
-    
+#Loop through to assign the groups. There are 10 groups in total for CRC case/control cohort.
+group_size = (len(rand_ctrl_list))//num_groups 
+for i in range(num_groups):
+    grouping_list = []
+    #condition when you are at the last group to include the remaining samples
+    if (i == (num_groups - 1)):
+        assign_groups(rand_ctrl_list, i * group_size, len(rand_ctrl_list), grouping_list)
+        write_groups(folder_name, f"cases_ctrls_group{i+1}.txt", caseslist, grouping_list)
+    else:
+        assign_groups(rand_ctrl_list, i * group_size, (i+1) * group_size, grouping_list)
+        write_groups(folder_name, f"cases_ctrls_group{i+1}.txt", caseslist, grouping_list)
